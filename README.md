@@ -40,7 +40,7 @@ main();
 
 Win + D:
 ```typescript
-import * as sophia from '../index';
+import * as sophia from '@deeean/sophia';
 
 async function main() {
   await sophia.keyPress(sophia.Key.LWin);
