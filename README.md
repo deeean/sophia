@@ -24,7 +24,13 @@ npm install @deeean/sophia
 ```
 
 ## Supported Platforms
-- Windows x64
+| Platform    | Supported |
+|-------------|-----------|
+| Windows x64 | ✅        |
+| Windows x86 | ❌        |
+| Windows ARM | ❌        |
+| Linux       | ❌        |
+| macOS       | ❌        |
 
 ## Examples
 Typing a text:
@@ -168,3 +174,8 @@ async function main() {
 
 main();
 ```
+
+## Related projects
+- [AutoHotkey](https://github.com/AutoHotkey/AutoHotkey)
+- [PyAutoGUI](https://github.com/asweigart/pyautogui)
+- [RobotJS](https://github.com/octalmage/robotjs)
