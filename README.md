@@ -1,7 +1,21 @@
-# sophia
-> 🚧 Attention! This is a work in progress. The API is not stable and may change at any time.
+<div>
+  <h1>Sophia</h1>
+  <p>
+    A library for Windows automation.
+  </p>
+  
+  ![NPM Version](https://img.shields.io/npm/v/@deeean/sophia)
+  ![NPM License](https://img.shields.io/npm/l/@deeean/sophia)
+  ![Dependents (via libraries.io)](https://img.shields.io/librariesio/dependents/npm/@deeean/sophia)
 
-Sophia is a Node.js library designed for automating desktop tasks, including mouse movements, image searching, and screen captures, inspired by a desire to update and enhance automation capabilities akin to those offered by AutoHotKey.
+</div>
+
+## Features
+- Keyboard control (planned)
+- Mouse control
+- Image search
+- Window control
+- Memory (planned)
 
 ## Installation
 install with npm:
@@ -9,7 +23,10 @@ install with npm:
 npm install @deeean/sophia
 ```
 
-## Usage
+## Supported Platforms
+- Windows x64
+
+## Examples
 Move the mouse cursor:
 ```typescript
 import * as sophia from '@deeean/sophia';
@@ -127,6 +144,3 @@ async function main() {
 
 main();
 ```
-
-## Motivation
-When I was young, I liked to automate things using AutoHotKey but it's not actively maintained, so I decided to make a new automation framework.
