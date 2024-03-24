@@ -11,7 +11,7 @@
 </div>
 
 ## Features
-- Keyboard control (planned)
+- Keyboard control (partially)
 - Mouse control
 - Image search
 - Window control
@@ -27,6 +27,17 @@ npm install @deeean/sophia
 - Windows x64
 
 ## Examples
+Typing a text:
+```typescript
+import * as sophia from '@deeean/sophia';
+
+async function main() {
+  await sophia.typeText('Hello, World!');
+}
+
+main();
+```
+
 Move the mouse cursor:
 ```typescript
 import * as sophia from '@deeean/sophia';

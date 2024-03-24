@@ -33,6 +33,7 @@ export function mousePress(button: MouseButton): Promise<boolean>
 export function mouseRelease(button: MouseButton): Promise<boolean>
 export function mouseClick(button: MouseButton, x: number, y: number): Promise<boolean>
 export function getMousePosition(): Promise<Point>
+export function typeText(text: string): Promise<void>
 export function getScreenSize(): Promise<Point>
 export function takeScreenshot(x: number, y: number, width: number, height: number): Promise<ImageData>
 export function getForegroundWindow(): Promise<Window | null>
