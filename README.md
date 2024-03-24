@@ -1,7 +1,7 @@
 <div>
   <h1>Sophia</h1>
   <p>
-    A library for Windows automation.
+    Sophia is a Node.js library for automating tasks on Windows.
   </p>
   
   ![NPM Version](https://img.shields.io/npm/v/@deeean/sophia)
