@@ -11,6 +11,7 @@ napi = { version = "2.9.1", features = ["tokio_rt"] }
 napi-derive = "2.9.1"
 image = "0.24.3"
 tokio = { version = "1.21.1", features = ["full"] }
+bitflags = "2.5.0"
 
 [dependencies.windows]
 version = "0.51.1"
@@ -19,6 +20,7 @@ features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
+    "Win32_System_LibraryLoader",
 ]
 
 [build-dependencies]

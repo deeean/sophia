@@ -52,9 +52,9 @@ Win + D:
 import * as sophia from '@deeean/sophia';
 
 async function main() {
-  await sophia.keyPress(sophia.Key.LWin);
+  await sophia.keyPress(sophia.Key.LeftWin);
   await sophia.keyClick(sophia.Key.D);
-  await sophia.keyRelease(sophia.Key.LWin);
+  await sophia.keyRelease(sophia.Key.LeftWin);
 }
 
 

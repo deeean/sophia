@@ -1,46 +1,35 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use windows::Win32::UI::Input::KeyboardAndMouse::{MOUSE_EVENT_FLAGS, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_MOVE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, KEYBD_EVENT_FLAGS, KEYEVENTF_UNICODE, SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VIRTUAL_KEY};
-use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
+use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN, };
 use crate::geometry::Point;
 
 #[napi]
+#[derive(Debug)]
 pub enum Key {
     None = 0,
-    LButton = 1,
-    RButton = 2,
-    Cancel = 3,
-    MButton = 4,
-    XButton1 = 5,
-    XButton2 = 6,
     Back = 8,
     Tab = 9,
     LineFeed = 10,
     Clear = 12,
     Enter = 13,
-    ShiftKey = 16,
-    ControlKey = 17,
-    Menu = 18,
+    Shift = 16,
+    Control = 17,
+    Alt = 18,
     Pause = 19,
     CapsLock = 20,
-    FinalMode = 24,
-    Escape = 27,
+    Esc = 27,
     Space = 32,
     PageUp = 33,
     PageDown = 34,
     End = 35,
     Home = 36,
-    Left = 37,
-    Up = 38,
-    Right = 39,
-    Down = 40,
-    Select = 41,
-    Print = 42,
-    Execute = 43,
-    PrintScreen = 44,
+    ArrowLeft = 37,
+    ArrowUp = 38,
+    ArrowRight = 39,
+    ArrowDown = 40,
     Insert = 45,
     Delete = 46,
-    Help = 47,
     D0 = 48,
     D1 = 49,
     D2 = 50,
@@ -77,8 +66,8 @@ pub enum Key {
     X = 88,
     Y = 89,
     Z = 90,
-    LWin = 91,
-    RWin = 92,
+    LeftWin = 91,
+    RightWin = 92,
     Apps = 93,
     Sleep = 95,
     NumPad0 = 96,
@@ -122,40 +111,32 @@ pub enum Key {
     F23 = 134,
     F24 = 135,
     NumLock = 144,
-    Scroll = 145,
-    LShiftKey = 160,
-    RShiftKey = 161,
-    LControlKey = 162,
-    RControlKey = 163,
-    LMenu = 164,
-    RMenu = 165,
-    BrowserBack = 166,
-    BrowserForward = 167,
-    BrowserRefresh = 168,
-    BrowserStop = 169,
-    BrowserSearch = 170,
-    BrowserFavorites = 171,
-    BrowserHome = 172,
-    VolumeMute = 173,
-    VolumeDown = 174,
-    VolumeUp = 175,
-    MediaNextTrack = 176,
-    MediaPreviousTrack = 177,
-    MediaStop = 178,
-    MediaPlayPause = 179,
-    LaunchMail = 180,
-    SelectMedia = 181,
-    LaunchApplication1 = 182,
-    LaunchApplication2 = 183,
-    ProcessKey = 229,
-    Packet = 231,
-    Attn = 246,
-    Exsel = 248,
-    EraseEof = 249,
-    Play = 250,
-    Zoom = 251,
-    NoName = 252,
-    Pa1 = 253
+    ScrollLock = 145,
+    LeftShift = 160,
+    RightShift = 161,
+    LeftControl = 162,
+    RightControl = 163,
+    LeftAlt = 164,
+    RightAlt = 165,
+}
+
+bitflags::bitflags! {
+    pub struct Modifiers: u32 {
+        const Alt = 0x01;
+        const AltGraph = 0x2;
+        const CapsLock = 0x4;
+        const Control = 0x8;
+        const Fn = 0x10;
+        const FnLock = 0x20;
+        const Meta = 0x40;
+        const NumLock = 0x80;
+        const ScrollLock = 0x100;
+        const Shift = 0x200;
+        const Symbol = 0x400;
+        const SymbolLock = 0x800;
+        const HYPER = 0x1000;
+        const SUPER = 0x2000;
+    }
 }
 
 #[napi]
