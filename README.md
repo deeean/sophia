@@ -11,7 +11,7 @@
 </div>
 
 ## Features
-- Keyboard control (partially)
+- Keyboard control
 - Mouse control
 - Image search
 - Window control
@@ -34,6 +34,20 @@ import * as sophia from '@deeean/sophia';
 async function main() {
   await sophia.typeText('Hello, World!');
 }
+
+main();
+```
+
+Win + D:
+```typescript
+import * as sophia from '../index';
+
+async function main() {
+  await sophia.keyPress(sophia.Key.LWin);
+  await sophia.keyClick(sophia.Key.D);
+  await sophia.keyRelease(sophia.Key.LWin);
+}
+
 
 main();
 ```
