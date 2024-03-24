@@ -33,6 +33,9 @@ npm install @deeean/sophia
 | macOS       | ❌        |
 
 ## Examples
+### [Aim Test](https://www.arealme.com/aim-test/en/)
+<img src="https://media.deeean.com/sophia_aimtest.gif" />
+
 Typing a text:
 ```typescript
 import * as sophia from '@deeean/sophia';
