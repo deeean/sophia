@@ -25,6 +25,44 @@ pub async fn mouse_move(x: i32, y: i32) -> Result<bool> {
 }
 
 #[napi]
+pub async fn mouse_press(button: MouseButton) -> Result<bool> {
+    match tokio::spawn(async move {
+        let down = match button {
+            MouseButton::Left => MOUSEEVENTF_LEFTDOWN,
+            MouseButton::Right => MOUSEEVENTF_RIGHTDOWN,
+            MouseButton::Middle => MOUSEEVENTF_MIDDLEDOWN,
+        };
+
+        mouse_event(down, 0, 0, 0, 0);
+    }).await {
+        Ok(_) => Ok(true),
+        Err(e) => Err(Error::new(
+            Status::GenericFailure,
+            format!("Error: {:?}", e),
+        )),
+    }
+}
+
+#[napi]
+pub async fn mouse_release(button: MouseButton) -> Result<bool> {
+    match tokio::spawn(async move {
+        let up = match button {
+            MouseButton::Left => MOUSEEVENTF_LEFTUP,
+            MouseButton::Right => MOUSEEVENTF_RIGHTUP,
+            MouseButton::Middle => MOUSEEVENTF_MIDDLEUP,
+        };
+
+        mouse_event(up, 0, 0, 0, 0);
+    }).await {
+        Ok(_) => Ok(true),
+        Err(e) => Err(Error::new(
+            Status::GenericFailure,
+            format!("Error: {:?}", e),
+        )),
+    }
+}
+
+#[napi]
 pub async fn mouse_click(button: MouseButton, x: i32, y: i32) -> Result<bool> {
     match tokio::spawn(async move {
         let (down, up) = match button {
@@ -46,9 +84,9 @@ pub async fn mouse_click(button: MouseButton, x: i32, y: i32) -> Result<bool> {
 }
 
 #[napi]
-pub async fn get_mouse_pos() -> Result<Point> {
+pub async fn get_mouse_position() -> Result<Point> {
     match tokio::spawn(async move {
-        get_mouse_pos_inner()
+        get_mouse_position_inner()
     }).await {
         Ok(pos) => Ok(pos),
         Err(e) => Err(Error::new(
@@ -58,14 +96,13 @@ pub async fn get_mouse_pos() -> Result<Point> {
     }
 }
 
-fn get_mouse_pos_inner() -> Point {
-    let mut pos = windows::Win32::Foundation::POINT { x: 0, y: 0 };
+fn get_mouse_position_inner() -> Point {
+    let mut position = windows::Win32::Foundation::POINT { x: 0, y: 0 };
     unsafe {
-        // @todo: Handle return value
-        let _ = GetCursorPos(&mut pos);
+        let _ = GetCursorPos(&mut position);
     }
 
-    Point::new(pos.x as u32, pos.y as u32)
+    Point::new(position.x, position.y)
 }
 
 fn mouse_event(dw_flags: MOUSE_EVENT_FLAGS, dx: i32, dy: i32, dw_data: i32, dw_extra_info: usize) {

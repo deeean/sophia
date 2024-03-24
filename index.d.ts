@@ -7,6 +7,12 @@ export interface Point {
   x: number
   y: number
 }
+export interface Rect {
+  left: number
+  top: number
+  right: number
+  bottom: number
+}
 export interface Color {
   r: number
   g: number
@@ -23,13 +29,26 @@ export const enum MouseButton {
   Middle = 2
 }
 export function mouseMove(x: number, y: number): Promise<boolean>
+export function mousePress(button: MouseButton): Promise<boolean>
+export function mouseRelease(button: MouseButton): Promise<boolean>
 export function mouseClick(button: MouseButton, x: number, y: number): Promise<boolean>
-export function getMousePos(): Promise<Point>
+export function getMousePosition(): Promise<Point>
 export function getScreenSize(): Promise<Point>
 export function takeScreenshot(x: number, y: number, width: number, height: number): Promise<ImageData>
+export function getForegroundWindow(): Promise<Window | null>
+export function findWindowByTitle(title: string): Promise<Window | null>
 export class ImageData {
   data: Array<number>
   width: number
   height: number
   pixelWidth: number
+}
+export class Window {
+  setMinimize(): Promise<void>
+  setMaximize(): Promise<void>
+  getTitle(): Promise<string>
+  getWindowRect(): Promise<Rect>
+  setPosition(x: number, y: number): Promise<void>
+  setSize(width: number, height: number): Promise<void>
+  setForeground(): Promise<boolean>
 }

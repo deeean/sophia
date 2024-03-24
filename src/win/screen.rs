@@ -2,7 +2,7 @@ use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompatibleDC, DeleteDC, DeleteObject, GetDC, GetDIBits, ReleaseDC, SelectObject, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, DIB_RGB_COLORS, RGBQUAD, SRCCOPY};
 use windows::Win32::UI::WindowsAndMessaging::{GetDesktopWindow, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
-use crate::display::{ImageData};
+use crate::screen::{ImageData};
 use crate::geometry::Point;
 
 fn create_bitmap_info(width: i32, height: i32) -> BITMAPINFO {
@@ -35,7 +35,7 @@ pub async fn get_screen_size() -> Result<Point> {
         unsafe {
             let width = GetSystemMetrics(SM_CXSCREEN);
             let height = GetSystemMetrics(SM_CYSCREEN);
-            Point::new(width as u32, height as u32)
+            Point::new(width, height)
         }
     }).await {
         Ok(size) => Ok(size),

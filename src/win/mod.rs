@@ -1,2 +1,3 @@
 pub mod keyboard_mouse;
-pub mod display;
+pub mod screen;
+pub mod window;

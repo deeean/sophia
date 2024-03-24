@@ -210,7 +210,7 @@ fn multiple_image_search_inner(
             }
 
             if is_found {
-                points.push(Point { x: sx, y: sy });
+                points.push(Point { x: sx as i32, y: sy as i32 });
             }
         }
     } else {
@@ -288,7 +288,10 @@ fn multiple_image_search_inner(
             }
 
             if is_found {
-                points.push(Point { x: sx, y: sy });
+                points.push(Point {
+                    x: sx as i32,
+                    y: sy as i32
+                });
             }
         }
     }
@@ -353,7 +356,7 @@ fn image_search_inner(
             }
 
             if is_found {
-                return Some(Point { x: sx, y: sy });
+                return Some(Point { x: sx as i32, y: sy as i32 });
             }
         }
     } else {
@@ -431,7 +434,7 @@ fn image_search_inner(
             }
 
             if is_found {
-                return Some(Point { x: sx, y: sy });
+                return Some(Point { x: sx as i32, y: sy as i32 });
             }
         }
     }
@@ -498,7 +501,7 @@ fn image_search_trans_inner(
             }
 
             if is_found {
-                return Some(Point { x: sx, y: sy });
+                return Some(Point { x: sx  as i32, y: sy  as i32 });
             }
         }
     } else {
@@ -580,7 +583,7 @@ fn image_search_trans_inner(
             }
 
             if is_found {
-                return Some(Point { x: sx, y: sy });
+                return Some(Point { x: sx as i32, y: sy as i32 });
             }
         }
     }
@@ -648,7 +651,7 @@ fn multiple_image_search_trans_inner(
             }
 
             if is_found {
-                points.push(Point { x: sx, y: sy });
+                points.push(Point { x: sx as i32, y: sy as i32 });
             }
         }
     } else {
@@ -730,7 +733,7 @@ fn multiple_image_search_trans_inner(
             }
 
             if is_found {
-                points.push(Point { x: sx, y: sy });
+                points.push(Point { x: sx as i32, y: sy as i32 });
             }
         }
     }
