@@ -1,6 +1,6 @@
 {
   "name": "@deeean/sophia-win32-x64-msvc",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "os": [
     "win32"
   ],

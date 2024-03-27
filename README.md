@@ -1,7 +1,7 @@
-<div>
+<div align="center">
   <h1>Sophia</h1>
   <p>
-    Sophia is a Node.js library for automating tasks on Windows.
+    <b>Sophia</b> is a library for automating Windows applications.
   </p>
   
   ![NPM Version](https://img.shields.io/npm/v/@deeean/sophia)
@@ -11,10 +11,17 @@
 </div>
 
 ## Features
-- Keyboard control
-- Mouse control
-- Image search
-- Window control
+- Keyboard
+  - Send key
+  - Send text
+  - Hotkey
+- Mouse
+  - Move cursor
+  - Click
+- Screen
+  - Image search
+  - Multiple image search
+- Window
 - Memory (planned)
 
 ## Installation
@@ -24,13 +31,7 @@ npm install @deeean/sophia
 ```
 
 ## Supported Platforms
-| Platform    | Supported |
-|-------------|-----------|
-| Windows x64 | ✅        |
-| Windows x86 | ❌        |
-| Windows ARM | ❌        |
-| Linux       | ❌        |
-| macOS       | ❌        |
+Only support Windows x64 for now.
 
 ## Examples
 ### [Aim Test](https://www.arealme.com/aim-test/en/)
@@ -47,7 +48,31 @@ async function main() {
 main();
 ```
 
-Win + D:
+Hotkey Ctrl + A:
+```typescript
+import { registerHotkey, Modifiers, Key, mouseMove } from '@deeean/sophia';
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function main() {
+  registerHotkey([Modifiers.Control], Key.A, async () => {
+    await mouseMove(100, 100);
+    await sleep(100);
+    await mouseMove(200, 100);
+    await sleep(100);
+    await mouseMove(200, 200);
+    await sleep(100);
+    await mouseMove(100, 200);
+    await sleep(100);
+    await mouseMove(100, 100);
+  });
+}
+
+
+main();
+```
+
+Send Win + D:
 ```typescript
 import * as sophia from '@deeean/sophia';
 

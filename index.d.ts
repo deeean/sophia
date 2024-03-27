@@ -23,6 +23,22 @@ export function readImageData(path: string): Promise<ImageData>
 export function writeImageData(path: string, imageData: ImageData): Promise<void>
 export function imageSearch(source: ImageData, target: ImageData, variant?: number | undefined | null, transColor?: Color | undefined | null): Promise<Point | null>
 export function multipleImageSearch(source: ImageData, target: ImageData, variant?: number | undefined | null, transColor?: Color | undefined | null): Promise<Array<Point>>
+export const enum Modifiers {
+  Alt = 1,
+  AltGraph = 2,
+  CapsLock = 4,
+  Control = 8,
+  Fn = 16,
+  FnLock = 32,
+  Meta = 64,
+  NumLock = 128,
+  ScrollLock = 256,
+  Shift = 512,
+  Symbol = 1024,
+  SymbolLock = 2048,
+  Hyper = 4096,
+  Super = 8192
+}
 export const enum Key {
   None = 0,
   Back = 8,
@@ -141,6 +157,8 @@ export const enum MouseButton {
   Right = 1,
   Middle = 2
 }
+export function registerHotkey(mods: Array<Modifiers>, key: Key, callback: (...args: any[]) => any): number
+export function unregisterHotkey(id: number): void
 export function mouseMove(x: number, y: number): Promise<boolean>
 export function mousePress(button: MouseButton): Promise<boolean>
 export function mouseRelease(button: MouseButton): Promise<boolean>

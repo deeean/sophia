@@ -7,14 +7,15 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-napi = { version = "2.9.1", features = ["tokio_rt"] }
-napi-derive = "2.9.1"
-image = "0.24.3"
+napi = { version = "2.16.0", features = ["tokio_rt"] }
+napi-derive = "2.16.0"
+image = "0.25.0"
 tokio = { version = "1.21.1", features = ["full"] }
-bitflags = "2.5.0"
+lazy_static = "1.4.0"
+crossbeam-channel = "0.5.12"
 
 [dependencies.windows]
-version = "0.51.1"
+version = "0.54.0"
 features = [
     "Win32_UI_Input_KeyboardAndMouse",
     "Win32_UI_WindowsAndMessaging",
@@ -24,7 +25,7 @@ features = [
 ]
 
 [build-dependencies]
-napi-build = "2.0.1"
+napi-build = "2.1.2"
 
 [profile.release]
 lto = true
