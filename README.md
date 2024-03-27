@@ -44,78 +44,29 @@ Only support Windows x64 for now.
 
 Typing a text:
 ```typescript
-import * as sophia from '@deeean/sophia';
-
-async function main() {
-  await sophia.typeText('Hello, World!');
-}
-
-main();
+await sophia.typeText('Hello, World!');
 ```
 
 Hotkey Ctrl + A:
 ```typescript
-import { registerHotkey, Modifiers, Key, mouseMove } from '@deeean/sophia';
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function main() {
-  registerHotkey([Modifiers.Control], Key.A, async () => {
-    await mouseMove(100, 100);
-    await sleep(100);
-    await mouseMove(200, 100);
-    await sleep(100);
-    await mouseMove(200, 200);
-    await sleep(100);
-    await mouseMove(100, 200);
-    await sleep(100);
-    await mouseMove(100, 100);
-  });
-}
-
-
-main();
+sophia.registerHotkey([sophia.Modifiers.Control], sophia.Key.A, async () => {
+  await sophia.mouseMove(100, 100);
+  await sophia.sleep(100);
+  await sophia.mouseMove(200, 100);
+  await sophia.sleep(100);
+  await sophia.mouseMove(200, 200);
+  await sophia.sleep(100);
+  await sophia.mouseMove(100, 200);
+  await sophia.sleep(100);
+  await sophia.mouseMove(100, 100);
+});
 ```
 
 Send Win + D:
 ```typescript
-import * as sophia from '@deeean/sophia';
-
-async function main() {
-  await sophia.keyPress(sophia.Key.LeftWin);
-  await sophia.keyClick(sophia.Key.D);
-  await sophia.keyRelease(sophia.Key.LeftWin);
-}
-
-
-main();
-```
-
-Move the mouse cursor:
-```typescript
-import * as sophia from '@deeean/sophia';
-
-const TAU = Math.PI * 2;
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function main() {
-  const screenSize = await sophia.getScreenSize();
-  const smallest = Math.min(screenSize.x, screenSize.y);
-  const radius = smallest / 2;
-  const center = { x: screenSize.x / 2, y: screenSize.y / 2 };
-  const iteration = 100;
-
-  for (let i = 0; i < iteration; i++) {
-    const angle = i * TAU / iteration;
-    const x = center.x + radius * Math.cos(angle);
-    const y = center.y + radius * Math.sin(angle);
-    await sophia.mouseMove(x, y);
-    await sleep(10);
-  }
-}
-
-main();
+await sophia.keyPress(sophia.Key.LeftWin);
+await sophia.keyClick(sophia.Key.D);
+await sophia.keyRelease(sophia.Key.LeftWin);
 ```
 
 Search an image:
@@ -162,47 +113,6 @@ async function main() {
   } else {
     console.log('Not found');
   }
-}
-
-main();
-```
-
-Draw a circle on Paint:
-```typescript
-import * as sophia from '../index';
-
-const TAU = Math.PI * 2;
-
-const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-async function main() {
-  const mspaint = await sophia.findWindowByTitle("Untitled - Paint");
-  if (mspaint) {
-    await mspaint.setForeground();
-    await mspaint.setMaximize();
-  }
-
-  let x = 400;
-  let y = 600;
-
-  await sophia.mouseMove(x, y);
-  await sophia.mousePress(sophia.MouseButton.Left);
-
-  const iterations = 100;
-
-  for (let i = 0; i < iterations; i++) {
-    x += Math.sin(i / iterations * TAU) * 10;
-    y += Math.cos(i / iterations * TAU) * 10;
-    await sophia.mouseMove(x, y);
-
-    if (i === 0) {
-      await sophia.mousePress(sophia.MouseButton.Left);
-    }
-
-    await sleep(10);
-  }
-
-  await sophia.mouseRelease(sophia.MouseButton.Left);
 }
 
 main();
