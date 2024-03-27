@@ -1,6 +1,6 @@
 {
   "name": "@deeean/sophia",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "index.js",
   "types": "index.d.ts",
   "author": "deeean <margintop3498@icloud.com>",
@@ -70,6 +70,6 @@
     "arrowParens": "always"
   },
   "optionalDependencies": {
-    "@deeean/sophia-win32-x64-msvc": "0.1.0"
+    "@deeean/sophia-win32-x64-msvc": "0.1.1"
   }
 }

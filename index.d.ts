@@ -172,6 +172,12 @@ export function getScreenSize(): Promise<Point>
 export function takeScreenshot(x: number, y: number, width: number, height: number): Promise<ImageData>
 export function getForegroundWindow(): Promise<Window | null>
 export function findWindowByTitle(title: string): Promise<Window | null>
+export function findWindowByClassName(classname: string): Promise<Window | null>
+export interface Process {
+  pid: number
+  name: string
+}
+export function getProcesses(): Promise<Array<Process>>
 export class ImageData {
   data: Array<number>
   width: number

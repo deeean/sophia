@@ -4,7 +4,7 @@ use windows::core::PCWSTR;
 use windows::Win32::Foundation::HWND;
 use windows::Win32::UI::WindowsAndMessaging::{FindWindowW, GetForegroundWindow, GetWindowTextLengthW, GetWindowTextW, SET_WINDOW_POS_FLAGS, SetForegroundWindow, SetWindowPos, SHOW_WINDOW_CMD, ShowWindow, ShowWindowAsync, SW_MAXIMIZE, SW_MINIMIZE, SW_SHOWNORMAL, SWP_NOMOVE, SWP_NOSIZE};
 use crate::geometry::Rect;
-use crate::utils::trim;
+use crate::utils::{decode_wide, encode_wide};
 
 #[napi]
 pub struct Window {
@@ -33,7 +33,7 @@ impl Window {
                 let len = GetWindowTextLengthW(hwnd);
                 let mut buffer = vec![0u16; len as usize + 1];
                 GetWindowTextW(hwnd, &mut buffer);
-                trim(&buffer)
+                decode_wide(&buffer)
             }
         }).await {
             Ok(text) => Ok(text),
@@ -167,11 +167,28 @@ pub async fn get_foreground_window() -> Result<Option<Window>> {
 pub async fn find_window_by_title(title: String) -> Result<Option<Window>> {
     match tokio::spawn(async move {
         let hwnd = unsafe {
-            let mut title = title.encode_utf16().collect::<Vec<u16>>();
-            title.push(0);
-            let title = PCWSTR(title.as_ptr());
+            FindWindowW(None, PCWSTR(encode_wide(title).as_ptr()))
+        };
 
-            FindWindowW(None, title)
+        if hwnd.0 == 0 {
+            None
+        } else {
+            Some(Window { hwnd })
+        }
+    }).await {
+        Ok(window) => Ok(window),
+        Err(e) => Err(Error::new(
+            Status::GenericFailure,
+            format!("Error: {:?}", e),
+        )),
+    }
+}
+
+#[napi]
+pub async fn find_window_by_class_name(classname: String) -> Result<Option<Window>> {
+    match tokio::spawn(async move {
+        let hwnd = unsafe {
+            FindWindowW(PCWSTR(encode_wide(classname).as_ptr()), None)
         };
 
         if hwnd.0 == 0 {

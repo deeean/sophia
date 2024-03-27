@@ -25,9 +25,10 @@
   - Foreground
   - Maximize
   - Minimize
-- Memory (planned)
-  - Read memory
-  - Write memory
+- Memory
+  - Get processes
+  - Read memory (planned)
+  - Write memory (planned)
 
 ## Installation
 install with npm:

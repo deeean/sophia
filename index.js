@@ -295,7 +295,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { ImageData, MAGENTA, readImageData, writeImageData, imageSearch, multipleImageSearch, Modifiers, Key, MouseButton, registerHotkey, unregisterHotkey, mouseMove, mousePress, mouseRelease, mouseClick, keyClick, keyPress, keyRelease, getMousePosition, typeText, getScreenSize, takeScreenshot, Window, getForegroundWindow, findWindowByTitle } = nativeBinding
+const { ImageData, MAGENTA, readImageData, writeImageData, imageSearch, multipleImageSearch, Modifiers, Key, MouseButton, registerHotkey, unregisterHotkey, mouseMove, mousePress, mouseRelease, mouseClick, keyClick, keyPress, keyRelease, getMousePosition, typeText, getScreenSize, takeScreenshot, Window, getForegroundWindow, findWindowByTitle, findWindowByClassName, getProcesses } = nativeBinding
 
 module.exports.ImageData = ImageData
 module.exports.MAGENTA = MAGENTA
@@ -322,3 +322,5 @@ module.exports.takeScreenshot = takeScreenshot
 module.exports.Window = Window
 module.exports.getForegroundWindow = getForegroundWindow
 module.exports.findWindowByTitle = findWindowByTitle
+module.exports.findWindowByClassName = findWindowByClassName
+module.exports.getProcesses = getProcesses

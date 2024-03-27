@@ -5,7 +5,6 @@ const TAU = Math.PI * 2;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function main() {
-  // Should be changed title to your language
   const mspaint = await sophia.findWindowByTitle("Untitled - Paint");
   if (mspaint) {
     await mspaint.setForeground();

@@ -10,8 +10,8 @@ use napi_derive::napi;
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
-use windows::Win32::UI::Input::KeyboardAndMouse::{MOUSE_EVENT_FLAGS, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_MOVE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, KEYBD_EVENT_FLAGS, KEYEVENTF_UNICODE, SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VIRTUAL_KEY, RegisterHotKey, MOD_NOREPEAT, MOD_SHIFT, MOD_ALT, MOD_CONTROL, HOT_KEY_MODIFIERS, UnregisterHotKey};
-use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, CW_USEDEFAULT, DefWindowProcW, DispatchMessageW, GetCursorPos, GetMessageW, GetSystemMetrics, HMENU, PeekMessageW, PM_REMOVE, RegisterClassW, SM_CXSCREEN, SM_CYSCREEN, TranslateMessage, WM_HOTKEY, WM_QUIT, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TRANSPARENT, WS_OVERLAPPED, WS_OVERLAPPEDWINDOW, WS_POPUP, WS_VISIBLE};
+use windows::Win32::UI::Input::KeyboardAndMouse::{MOUSE_EVENT_FLAGS, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_MOVE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, KEYBD_EVENT_FLAGS, KEYEVENTF_UNICODE, SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VIRTUAL_KEY, RegisterHotKey, MOD_NOREPEAT, MOD_SHIFT, MOD_ALT, MOD_CONTROL, UnregisterHotKey};
+use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, CW_USEDEFAULT, DefWindowProcW, DispatchMessageW, GetCursorPos, GetSystemMetrics, HMENU, PeekMessageW, PM_REMOVE, RegisterClassW, SM_CXSCREEN, SM_CYSCREEN, TranslateMessage, WM_HOTKEY, WM_QUIT, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TRANSPARENT, WS_OVERLAPPED,};
 use crate::geometry::Point;
 use crate::utils::encode_wide;
 
@@ -404,7 +404,7 @@ pub fn register_hotkey(mods: Vec<Modifiers>, key: Key, callback: JsFunction) -> 
         *GLOBAL_HOTKEY_PREPARED.lock().unwrap() = true;
     }
 
-    let tsfn: ThreadsafeFunction<()> = callback.create_threadsafe_function(0, |ctx| {
+    let tsfn: ThreadsafeFunction<()> = callback.create_threadsafe_function(0, |_ctx| {
         Ok(vec![0])
     }).unwrap();
 
