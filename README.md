@@ -12,17 +12,22 @@
 
 ## Features
 - Keyboard
-  - Send key
-  - Send text
+  - Send keys
   - Hotkey
 - Mouse
-  - Move cursor
+  - Move
   - Click
 - Screen
   - Image search
   - Multiple image search
 - Window
+  - Find by title
+  - Foreground
+  - Maximize
+  - Minimize
 - Memory (planned)
+  - Read memory
+  - Write memory
 
 ## Installation
 install with npm:
