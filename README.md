@@ -207,3 +207,6 @@ main();
 - [AutoHotkey](https://github.com/AutoHotkey/AutoHotkey)
 - [PyAutoGUI](https://github.com/asweigart/pyautogui)
 - [RobotJS](https://github.com/octalmage/robotjs)
+
+## License
+Sophia is licensed under the MIT License. Feel free to use it in your projects, adhering to the license terms.
