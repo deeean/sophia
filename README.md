@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Sophia</h1>
   <p>
-    <b>Sophia</b> is a library for automating Windows applications.
+    <strong>🤖 A Node.js library for automating Windows applications.</strong>
   </p>
   
   ![NPM Version](https://img.shields.io/npm/v/@deeean/sophia)
@@ -16,7 +16,6 @@
 - Memory
 
 ## Installation
-install with npm:
 ```bash
 npm install @deeean/sophia
 ```
@@ -32,6 +31,9 @@ Only support Windows x64 for now.
 - [AutoHotkey](https://github.com/AutoHotkey/AutoHotkey)
 - [PyAutoGUI](https://github.com/asweigart/pyautogui)
 - [RobotJS](https://github.com/octalmage/robotjs)
+
+## Inspiration
+I'm a big fan of [AutoHotkey](https://www.autohotkey.com/), but I want to use it in Node.js. So I decided to create a library that can automate Windows applications.
 
 ## License
 Sophia is licensed under the MIT License. Feel free to use it in your projects, adhering to the license terms.
