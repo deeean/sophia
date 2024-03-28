@@ -295,7 +295,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { ImageData, MAGENTA, readImageData, writeImageData, imageSearch, multipleImageSearch, Modifiers, Key, MouseButton, registerHotkey, unregisterHotkey, mouseMove, mousePress, mouseRelease, mouseClick, keyClick, keyPress, keyRelease, getMousePosition, typeText, getScreenSize, takeScreenshot, Window, getForegroundWindow, findWindowByTitle, findWindowByClassName, getProcesses } = nativeBinding
+const { ImageData, MAGENTA, readImageData, writeImageData, imageSearch, multipleImageSearch, Modifiers, Key, Keyboard, MouseButton, Mouse, getScreenSize, takeScreenshot, Window, getProcesses } = nativeBinding
 
 module.exports.ImageData = ImageData
 module.exports.MAGENTA = MAGENTA
@@ -305,22 +305,10 @@ module.exports.imageSearch = imageSearch
 module.exports.multipleImageSearch = multipleImageSearch
 module.exports.Modifiers = Modifiers
 module.exports.Key = Key
+module.exports.Keyboard = Keyboard
 module.exports.MouseButton = MouseButton
-module.exports.registerHotkey = registerHotkey
-module.exports.unregisterHotkey = unregisterHotkey
-module.exports.mouseMove = mouseMove
-module.exports.mousePress = mousePress
-module.exports.mouseRelease = mouseRelease
-module.exports.mouseClick = mouseClick
-module.exports.keyClick = keyClick
-module.exports.keyPress = keyPress
-module.exports.keyRelease = keyRelease
-module.exports.getMousePosition = getMousePosition
-module.exports.typeText = typeText
+module.exports.Mouse = Mouse
 module.exports.getScreenSize = getScreenSize
 module.exports.takeScreenshot = takeScreenshot
 module.exports.Window = Window
-module.exports.getForegroundWindow = getForegroundWindow
-module.exports.findWindowByTitle = findWindowByTitle
-module.exports.findWindowByClassName = findWindowByClassName
 module.exports.getProcesses = getProcesses

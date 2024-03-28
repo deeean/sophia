@@ -14,12 +14,12 @@ pub struct Window {
 #[napi]
 impl Window {
     #[napi]
-    pub async fn set_minimize(&self) -> Result<()> {
+    pub async fn minimize(&self) -> Result<()> {
         self.show_window(SW_MINIMIZE).await
     }
 
     #[napi]
-    pub async fn set_maximize(&self) -> Result<()> {
+    pub async fn maximize(&self) -> Result<()> {
         self.show_window(SW_MAXIMIZE).await
     }
 
@@ -97,7 +97,7 @@ impl Window {
     }
 
     #[napi]
-    pub async fn set_foreground(&self) -> Result<bool> {
+    pub async fn foreground(&self) -> Result<bool> {
         let hwnd = self.hwnd;
 
         match tokio::spawn(async move {
@@ -142,65 +142,66 @@ impl Window {
             )),
         }
     }
-}
 
-#[napi]
-pub async fn get_foreground_window() -> Result<Option<Window>> {
-    match tokio::spawn(async move {
-        let hwnd = unsafe { GetForegroundWindow() };
 
-        if hwnd.0 == 0 {
-            None
-        } else {
-            Some(Window { hwnd })
+    #[napi]
+    pub async fn get_foreground_window() -> Result<Option<Window>> {
+        match tokio::spawn(async move {
+            let hwnd = unsafe { GetForegroundWindow() };
+
+            if hwnd.0 == 0 {
+                None
+            } else {
+                Some(Window { hwnd })
+            }
+        }).await {
+            Ok(window) => Ok(window),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
         }
-    }).await {
-        Ok(window) => Ok(window),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
     }
-}
 
-#[napi]
-pub async fn find_window_by_title(title: String) -> Result<Option<Window>> {
-    match tokio::spawn(async move {
-        let hwnd = unsafe {
-            FindWindowW(None, PCWSTR(encode_wide(title).as_ptr()))
-        };
+    #[napi]
+    pub async fn find_window_by_title(title: String) -> Result<Option<Window>> {
+        match tokio::spawn(async move {
+            let hwnd = unsafe {
+                FindWindowW(None, PCWSTR(encode_wide(title).as_ptr()))
+            };
 
-        if hwnd.0 == 0 {
-            None
-        } else {
-            Some(Window { hwnd })
+            if hwnd.0 == 0 {
+                None
+            } else {
+                Some(Window { hwnd })
+            }
+        }).await {
+            Ok(window) => Ok(window),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
         }
-    }).await {
-        Ok(window) => Ok(window),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
     }
-}
 
-#[napi]
-pub async fn find_window_by_class_name(classname: String) -> Result<Option<Window>> {
-    match tokio::spawn(async move {
-        let hwnd = unsafe {
-            FindWindowW(PCWSTR(encode_wide(classname).as_ptr()), None)
-        };
+    #[napi]
+    pub async fn find_window_by_class_name(classname: String) -> Result<Option<Window>> {
+        match tokio::spawn(async move {
+            let hwnd = unsafe {
+                FindWindowW(PCWSTR(encode_wide(classname).as_ptr()), None)
+            };
 
-        if hwnd.0 == 0 {
-            None
-        } else {
-            Some(Window { hwnd })
+            if hwnd.0 == 0 {
+                None
+            } else {
+                Some(Window { hwnd })
+            }
+        }).await {
+            Ok(window) => Ok(window),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
         }
-    }).await {
-        Ok(window) => Ok(window),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
     }
 }

@@ -1,9 +1,9 @@
-import * as sophia from '../index';
+import { Keyboard, Key } from "../index";
 
 async function main() {
-  await sophia.keyPress(sophia.Key.LeftWin);
-  await sophia.keyClick(sophia.Key.D);
-  await sophia.keyRelease(sophia.Key.LeftWin);
+  await Keyboard.press(Key.LeftWin);
+  await Keyboard.click(Key.D);
+  await Keyboard.release(Key.LeftWin);
 }
 
 

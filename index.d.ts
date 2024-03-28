@@ -157,22 +157,8 @@ export const enum MouseButton {
   Right = 1,
   Middle = 2
 }
-export function registerHotkey(mods: Array<Modifiers>, key: Key, callback: (...args: any[]) => any): number
-export function unregisterHotkey(id: number): void
-export function mouseMove(x: number, y: number): Promise<boolean>
-export function mousePress(button: MouseButton): Promise<boolean>
-export function mouseRelease(button: MouseButton): Promise<boolean>
-export function mouseClick(button: MouseButton, x: number, y: number): Promise<boolean>
-export function keyClick(key: Key): Promise<boolean>
-export function keyPress(key: Key): Promise<boolean>
-export function keyRelease(key: Key): Promise<boolean>
-export function getMousePosition(): Promise<Point>
-export function typeText(text: string): Promise<void>
 export function getScreenSize(): Promise<Point>
 export function takeScreenshot(x: number, y: number, width: number, height: number): Promise<ImageData>
-export function getForegroundWindow(): Promise<Window | null>
-export function findWindowByTitle(title: string): Promise<Window | null>
-export function findWindowByClassName(classname: string): Promise<Window | null>
 export interface Process {
   pid: number
   name: string
@@ -184,12 +170,30 @@ export class ImageData {
   height: number
   pixelWidth: number
 }
+export class Keyboard {
+  static press(key: Key): Promise<boolean>
+  static release(key: Key): Promise<boolean>
+  static click(key: Key): Promise<boolean>
+  static typing(text: string): Promise<void>
+  static registerHotkey(mods: Array<Modifiers>, key: Key, callback: (...args: any[]) => any): number
+  static unregisterHotkey(id: number): void
+}
+export class Mouse {
+  static move(x: number, y: number): Promise<boolean>
+  static press(button: MouseButton): Promise<boolean>
+  static release(button: MouseButton): Promise<boolean>
+  static click(button: MouseButton, x: number, y: number): Promise<boolean>
+  static getPosition(): Promise<Point>
+}
 export class Window {
-  setMinimize(): Promise<void>
-  setMaximize(): Promise<void>
+  minimize(): Promise<void>
+  maximize(): Promise<void>
   getTitle(): Promise<string>
   getWindowRect(): Promise<Rect>
   setPosition(x: number, y: number): Promise<void>
   setSize(width: number, height: number): Promise<void>
-  setForeground(): Promise<boolean>
+  foreground(): Promise<boolean>
+  static getForegroundWindow(): Promise<Window | null>
+  static findWindowByTitle(title: string): Promise<Window | null>
+  static findWindowByClassName(classname: string): Promise<Window | null>
 }

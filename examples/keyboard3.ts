@@ -1,18 +1,18 @@
-import { registerHotkey, Modifiers, Key, mouseMove } from '../index';
+import { Keyboard, Mouse, Modifiers, Key } from '../index';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function main() {
-  registerHotkey([Modifiers.Control], Key.A, async () => {
-    await mouseMove(100, 100);
+  Keyboard.registerHotkey([Modifiers.Control], Key.A, async () => {
+    await Mouse.move(100, 100);
     await sleep(100);
-    await mouseMove(200, 100);
+    await Mouse.move(200, 100);
     await sleep(100);
-    await mouseMove(200, 200);
+    await Mouse.move(200, 200);
     await sleep(100);
-    await mouseMove(100, 200);
+    await Mouse.move(100, 200);
     await sleep(100);
-    await mouseMove(100, 100);
+    await Mouse.move(100, 100);
   });
 }
 

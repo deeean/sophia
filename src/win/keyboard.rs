@@ -10,9 +10,8 @@ use napi_derive::napi;
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
-use windows::Win32::UI::Input::KeyboardAndMouse::{MOUSE_EVENT_FLAGS, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_MOVE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, KEYBD_EVENT_FLAGS, KEYEVENTF_UNICODE, SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VIRTUAL_KEY, RegisterHotKey, MOD_NOREPEAT, MOD_SHIFT, MOD_ALT, MOD_CONTROL, UnregisterHotKey};
-use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, CW_USEDEFAULT, DefWindowProcW, DispatchMessageW, GetCursorPos, GetSystemMetrics, HMENU, PeekMessageW, PM_REMOVE, RegisterClassW, SM_CXSCREEN, SM_CYSCREEN, TranslateMessage, WM_HOTKEY, WM_QUIT, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TRANSPARENT, WS_OVERLAPPED,};
-use crate::geometry::Point;
+use windows::Win32::UI::Input::KeyboardAndMouse::{KEYBD_EVENT_FLAGS, KEYEVENTF_UNICODE, SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VIRTUAL_KEY, RegisterHotKey, MOD_NOREPEAT, MOD_SHIFT, MOD_ALT, MOD_CONTROL, UnregisterHotKey};
+use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, CW_USEDEFAULT, DefWindowProcW, DispatchMessageW, HMENU, PeekMessageW, PM_REMOVE, RegisterClassW, TranslateMessage, WM_HOTKEY, WM_QUIT, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TRANSPARENT, WS_OVERLAPPED,};
 use crate::utils::encode_wide;
 
 #[napi]
@@ -151,7 +150,6 @@ pub enum Key {
     RightAlt = 165,
 }
 
-// Key to string impl
 impl Display for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
@@ -271,11 +269,10 @@ impl Display for Key {
     }
 }
 
-#[napi]
-pub enum MouseButton {
-    Left,
-    Right,
-    Middle,
+lazy_static! {
+    static ref GLOBAL_HOTKEY_PREPARED: Mutex<bool> = Mutex::new(false);
+    static ref GLOBAL_HOTKEY_CHANNEL: (Sender<GlobalHotkeyMessage>, Receiver<GlobalHotkeyMessage>) = unbounded();
+    static ref GLOBAL_HOTKEY_CALLBACKS: Mutex<HashMap<u32, Vec<ThreadsafeFunction<()>>>> = Mutex::new(HashMap::new());
 }
 
 #[derive(Debug)]
@@ -397,42 +394,6 @@ fn prepare_global_hotkey() {
     });
 }
 
-#[napi]
-pub fn register_hotkey(mods: Vec<Modifiers>, key: Key, callback: JsFunction) -> u32 {
-    if !*GLOBAL_HOTKEY_PREPARED.lock().unwrap() {
-        prepare_global_hotkey();
-        *GLOBAL_HOTKEY_PREPARED.lock().unwrap() = true;
-    }
-
-    let tsfn: ThreadsafeFunction<()> = callback.create_threadsafe_function(0, |_ctx| {
-        Ok(vec![0])
-    }).unwrap();
-
-    let hotkey = Hotkey::new(mods, key);
-    let mut callbacks = GLOBAL_HOTKEY_CALLBACKS.lock().unwrap();
-    let id = hotkey.id;
-    let vec: &mut Vec<ThreadsafeFunction<()>> = callbacks.entry(id).or_insert(Vec::new());
-    vec.push(tsfn);
-
-    GLOBAL_HOTKEY_CHANNEL.0.send(GlobalHotkeyMessage::Register(hotkey)).unwrap();
-
-    id
-}
-
-#[napi]
-pub fn unregister_hotkey(id: u32) {
-    let mut callbacks = GLOBAL_HOTKEY_CALLBACKS.lock().unwrap();
-    callbacks.remove(&id);
-
-    GLOBAL_HOTKEY_CHANNEL.0.send(GlobalHotkeyMessage::Unregister(id)).unwrap();
-}
-
-lazy_static! {
-    static ref GLOBAL_HOTKEY_PREPARED: Mutex<bool> = Mutex::new(false);
-    static ref GLOBAL_HOTKEY_CHANNEL: (Sender<GlobalHotkeyMessage>, Receiver<GlobalHotkeyMessage>) = unbounded();
-    static ref GLOBAL_HOTKEY_CALLBACKS: Mutex<HashMap<u32, Vec<ThreadsafeFunction<()>>>> = Mutex::new(HashMap::new());
-}
-
 unsafe extern "system" fn global_hotkey_proc(
     hwnd: HWND,
     msg: u32,
@@ -454,207 +415,139 @@ unsafe extern "system" fn global_hotkey_proc(
 }
 
 #[napi]
-pub async fn mouse_move(x: i32, y: i32) -> Result<bool> {
-    match tokio::spawn(async move {
-        mouse_move_inner(x, y);
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
+pub struct Keyboard {
+
 }
 
 #[napi]
-pub async fn mouse_press(button: MouseButton) -> Result<bool> {
-    match tokio::spawn(async move {
-        let down = match button {
-            MouseButton::Left => MOUSEEVENTF_LEFTDOWN,
-            MouseButton::Right => MOUSEEVENTF_RIGHTDOWN,
-            MouseButton::Middle => MOUSEEVENTF_MIDDLEDOWN,
-        };
-
-        mouse_event(down, 0, 0, 0, 0);
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn mouse_release(button: MouseButton) -> Result<bool> {
-    match tokio::spawn(async move {
-        let up = match button {
-            MouseButton::Left => MOUSEEVENTF_LEFTUP,
-            MouseButton::Right => MOUSEEVENTF_RIGHTUP,
-            MouseButton::Middle => MOUSEEVENTF_MIDDLEUP,
-        };
-
-        mouse_event(up, 0, 0, 0, 0);
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn mouse_click(button: MouseButton, x: i32, y: i32) -> Result<bool> {
-    match tokio::spawn(async move {
-        let (down, up) = match button {
-            MouseButton::Left => (MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP),
-            MouseButton::Right => (MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP),
-            MouseButton::Middle => (MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP),
-        };
-
-        mouse_move_inner(x, y);
-        mouse_event(down, x, y, 0, 0);
-        mouse_event(up, x, y, 0, 0);
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn key_click(key: Key) -> Result<bool> {
-    match tokio::spawn(async move {
-        unsafe {
-            let mut inputs = Vec::new();
-
-            let mut input = INPUT::default();
-            input.r#type = INPUT_KEYBOARD;
-            input.Anonymous.ki.wVk = VIRTUAL_KEY(key as u16);
-            input.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS::from(KEYEVENTF_UNICODE);
-            input.Anonymous.ki.time = 0;
-            inputs.push(input);
-
-            input.Anonymous.ki.dwFlags |= KEYEVENTF_KEYUP;
-            inputs.push(input);
-
-            SendInput(inputs.as_slice(), std::mem::size_of::<INPUT>() as i32);
-        }
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn key_press(key: Key) -> Result<bool> {
-    match tokio::spawn(async move {
-        unsafe {
-            let mut input = INPUT::default();
-            input.r#type = INPUT_KEYBOARD;
-            input.Anonymous.ki.wVk = VIRTUAL_KEY(key as u16);
-            input.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS::from(KEYEVENTF_UNICODE);
-            input.Anonymous.ki.time = 0;
-            SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
-        }
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn key_release(key: Key) -> Result<bool> {
-    match tokio::spawn(async move {
-        unsafe {
-            let mut input = INPUT::default();
-            input.r#type = INPUT_KEYBOARD;
-            input.Anonymous.ki.wVk = VIRTUAL_KEY(key as u16);
-            input.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS::from(KEYEVENTF_UNICODE | KEYEVENTF_KEYUP);
-            input.Anonymous.ki.time = 0;
-            SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
-        }
-    }).await {
-        Ok(_) => Ok(true),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn get_mouse_position() -> Result<Point> {
-    match tokio::spawn(async move {
-        get_mouse_position_inner()
-    }).await {
-        Ok(pos) => Ok(pos),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-#[napi]
-pub async fn type_text(text: String) -> Result<()> {
-    match tokio::spawn(async move {
-        unsafe {
-            let text = text
-                .encode_utf16()
-                .collect::<Vec<_>>();
-
-            let mut inputs = Vec::new();
-
-            for c in text {
+impl Keyboard {
+    #[napi]
+    pub async fn press(key: Key) -> Result<bool> {
+        match tokio::spawn(async move {
+            unsafe {
                 let mut input = INPUT::default();
                 input.r#type = INPUT_KEYBOARD;
-                input.Anonymous.ki.dwFlags = KEYEVENTF_UNICODE;
-                input.Anonymous.ki.wScan = c;
+                input.Anonymous.ki.wVk = VIRTUAL_KEY(key as u16);
+                input.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS::from(KEYEVENTF_UNICODE);
+                input.Anonymous.ki.time = 0;
+                SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+            }
+        }).await {
+            Ok(_) => Ok(true),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
+        }
+    }
+
+    #[napi]
+    pub async fn release(key: Key) -> Result<bool> {
+        match tokio::spawn(async move {
+            unsafe {
+                let mut input = INPUT::default();
+                input.r#type = INPUT_KEYBOARD;
+                input.Anonymous.ki.wVk = VIRTUAL_KEY(key as u16);
+                input.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS::from(KEYEVENTF_UNICODE | KEYEVENTF_KEYUP);
+                input.Anonymous.ki.time = 0;
+                SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
+            }
+        }).await {
+            Ok(_) => Ok(true),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
+        }
+    }
+
+    #[napi]
+    pub async fn click(key: Key) -> Result<bool> {
+        match tokio::spawn(async move {
+            unsafe {
+                let mut inputs = Vec::new();
+
+                let mut input = INPUT::default();
+                input.r#type = INPUT_KEYBOARD;
+                input.Anonymous.ki.wVk = VIRTUAL_KEY(key as u16);
+                input.Anonymous.ki.dwFlags = KEYBD_EVENT_FLAGS::from(KEYEVENTF_UNICODE);
                 input.Anonymous.ki.time = 0;
                 inputs.push(input);
 
                 input.Anonymous.ki.dwFlags |= KEYEVENTF_KEYUP;
                 inputs.push(input);
+
+                SendInput(inputs.as_slice(), std::mem::size_of::<INPUT>() as i32);
             }
-
-            SendInput(inputs.as_slice(), std::mem::size_of::<INPUT>() as i32);
+        }).await {
+            Ok(_) => Ok(true),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
         }
-    }).await {
-        Ok(_) => Ok(()),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
-}
-
-fn get_mouse_position_inner() -> Point {
-    let mut position = windows::Win32::Foundation::POINT { x: 0, y: 0 };
-    unsafe {
-        let _ = GetCursorPos(&mut position);
     }
 
-    Point::new(position.x, position.y)
-}
+    #[napi]
+    pub async fn typing(text: String) -> Result<()> {
+        match tokio::spawn(async move {
+            unsafe {
+                let text = text
+                    .encode_utf16()
+                    .collect::<Vec<_>>();
 
-fn mouse_event(dw_flags: MOUSE_EVENT_FLAGS, dx: i32, dy: i32, dw_data: i32, dw_extra_info: usize) {
-    unsafe {
-        let x = dx * 65536 / GetSystemMetrics(SM_CXSCREEN);
-        let y = dy * 65536 / GetSystemMetrics(SM_CYSCREEN);
-        windows::Win32::UI::Input::KeyboardAndMouse::mouse_event(dw_flags, x, y, dw_data, dw_extra_info);
+                let mut inputs = Vec::new();
+
+                for c in text {
+                    let mut input = INPUT::default();
+                    input.r#type = INPUT_KEYBOARD;
+                    input.Anonymous.ki.dwFlags = KEYEVENTF_UNICODE;
+                    input.Anonymous.ki.wScan = c;
+                    input.Anonymous.ki.time = 0;
+                    inputs.push(input);
+
+                    input.Anonymous.ki.dwFlags |= KEYEVENTF_KEYUP;
+                    inputs.push(input);
+                }
+
+                SendInput(inputs.as_slice(), std::mem::size_of::<INPUT>() as i32);
+            }
+        }).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(Error::new(
+                Status::GenericFailure,
+                format!("Error: {:?}", e),
+            )),
+        }
     }
-}
 
-fn mouse_move_inner(x: i32, y: i32) {
-    mouse_event(MOUSEEVENTF_MOVE | MOUSEEVENTF_ABSOLUTE, x, y, 0, 0);
+    #[napi]
+    pub fn register_hotkey(mods: Vec<Modifiers>, key: Key, callback: JsFunction) -> u32 {
+        if !*GLOBAL_HOTKEY_PREPARED.lock().unwrap() {
+            prepare_global_hotkey();
+            *GLOBAL_HOTKEY_PREPARED.lock().unwrap() = true;
+        }
+
+        let tsfn: ThreadsafeFunction<()> = callback.create_threadsafe_function(0, |_ctx| {
+            Ok(vec![0])
+        }).unwrap();
+
+        let hotkey = Hotkey::new(mods, key);
+        let mut callbacks = GLOBAL_HOTKEY_CALLBACKS.lock().unwrap();
+        let id = hotkey.id;
+        let vec: &mut Vec<ThreadsafeFunction<()>> = callbacks.entry(id).or_insert(Vec::new());
+        vec.push(tsfn);
+
+        GLOBAL_HOTKEY_CHANNEL.0.send(GlobalHotkeyMessage::Register(hotkey)).unwrap();
+
+        id
+    }
+
+    #[napi]
+    pub fn unregister_hotkey(id: u32) {
+        let mut callbacks = GLOBAL_HOTKEY_CALLBACKS.lock().unwrap();
+        callbacks.remove(&id);
+
+        GLOBAL_HOTKEY_CHANNEL.0.send(GlobalHotkeyMessage::Unregister(id)).unwrap();
+    }
 }
