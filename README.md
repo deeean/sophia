@@ -13,7 +13,7 @@
 - Mouse
 - Screen
 - Window
-- Memory
+- Memory [WIP]
 
 ## Installation
 ```bash
