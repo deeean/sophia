@@ -238,8 +238,34 @@ export class OpenedProcess {
   readMemoryChainUint64(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
   readMemoryInt64(address: bigint): Promise<bigint>
   readMemoryChainInt64(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryUsize(address: bigint): Promise<bigint>
+  readMemoryChainUsize(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
   readMemoryFloat32(address: bigint): Promise<number>
   readMemoryChainFloat32(baseAddress: bigint, offsets: Array<bigint>): Promise<number>
   readMemoryFloat64(address: bigint): Promise<number>
   readMemoryChainFloat64(baseAddress: bigint, offsets: Array<bigint>): Promise<number>
+  writeMemoryBool(address: bigint, value: boolean): Promise<void>
+  writeMemoryChainBool(baseAddress: bigint, offsets: Array<bigint>, value: boolean): Promise<void>
+  writeMemoryUint8(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainUint8(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryInt8(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainInt8(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryUint16(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainUint16(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryInt16(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainInt16(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryUint32(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainUint32(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryInt32(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainInt32(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryUint64(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainUint64(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryInt64(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainInt64(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryUsize(address: bigint, value: bigint): Promise<void>
+  writeMemoryChainUsize(baseAddress: bigint, offsets: Array<bigint>, value: bigint): Promise<void>
+  writeMemoryFloat32(address: bigint, value: number): Promise<void>
+  writeMemoryChainFloat32(baseAddress: bigint, offsets: Array<bigint>, value: number): Promise<void>
+  writeMemoryFloat64(address: bigint, value: number): Promise<void>
+  writeMemoryChainFloat64(baseAddress: bigint, offsets: Array<bigint>, value: number): Promise<void>
 }

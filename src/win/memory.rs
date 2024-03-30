@@ -5,7 +5,7 @@ use windows::Win32::System::Diagnostics::Debug::ReadProcessMemory;
 use windows::Win32::System::Diagnostics::ToolHelp::{CreateToolhelp32Snapshot, Process32FirstW, Process32NextW, PROCESSENTRY32W, TH32CS_SNAPPROCESS};
 use windows::Win32::System::ProcessStatus::{EnumProcessModules, GetModuleFileNameExW};
 use windows::Win32::System::Threading::{OpenProcess, PROCESS_ACCESS_RIGHTS, PROCESS_ALL_ACCESS, PROCESS_CREATE_PROCESS, PROCESS_CREATE_THREAD, PROCESS_DELETE, PROCESS_DUP_HANDLE, PROCESS_QUERY_INFORMATION, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_READ_CONTROL, PROCESS_SET_INFORMATION, PROCESS_SET_LIMITED_INFORMATION, PROCESS_SET_QUOTA, PROCESS_SET_SESSIONID, PROCESS_SYNCHRONIZE, PROCESS_TERMINATE, PROCESS_VM_OPERATION, PROCESS_VM_READ, PROCESS_VM_WRITE, PROCESS_WRITE_DAC, PROCESS_WRITE_OWNER};
-use crate::utils::{decode_wide, handle_result};
+use crate::utils::{bigint_to_u8, bigint_to_i8, bigint_to_u16, bigint_to_i16, bigint_to_u32, bigint_to_u64, bigint_to_i32, decode_wide, handle_result, bigint_to_i64, bigint_to_usize};
 
 #[napi(object)]
 #[derive(Debug)]
@@ -157,9 +157,73 @@ async fn read_memory_chain<T: Default + Send + 'static>(
     handle_result(task).await
 }
 
-fn bigint_to_u64(bigint: BigInt) -> u64 {
-    let (_, value, _) = bigint.get_u64();
-    value
+fn write_memory_inner<T: Default>(
+    handle: HANDLE,
+    address: usize,
+    value: T,
+) -> std::result::Result<(), std::io::Error> {
+    if let Err(_) = unsafe {
+        windows::Win32::System::Diagnostics::Debug::WriteProcessMemory(
+            handle,
+            address as *mut _,
+            &value as *const _ as *const _,
+            std::mem::size_of::<T>(),
+            None,
+        )
+    } {
+        return Err(std::io::Error::last_os_error());
+    }
+
+    Ok(())
+}
+
+fn write_memory_chain_inner<T: Default>(
+    handle: HANDLE,
+    base_address: usize,
+    offsets: &[usize],
+    value: T,
+) -> std::result::Result<(), std::io::Error> {
+    let mut address = read_memory_inner::<usize>(handle, base_address)?;
+    let last_index = offsets.len() - 1;
+
+    for i in 0..last_index {
+        address = read_memory_inner::<usize>(handle, address + offsets[i])?;
+    }
+
+    write_memory_inner::<T>(handle, address + offsets[last_index], value)
+}
+
+async fn write_memory<T: Default + Send + 'static>(
+    handle: HANDLE,
+    address: u64,
+    value: T,
+) -> Result<()> where T: Send + 'static, {
+    let task = tokio::spawn(async move {
+        match write_memory_inner::<T>(handle, address as usize, value) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!("Failed to write memory: {:?}", err)),
+        }
+    });
+
+    handle_result(task).await
+}
+
+async fn write_memory_chain<T: Default + Send + 'static>(
+    handle: HANDLE,
+    base_address: u64,
+    offsets: Vec<u64>,
+    value: T,
+) -> Result<()> where T: Send + 'static, {
+    let task = tokio::spawn(async move {
+        let offsets: Vec<usize> = offsets.iter().map(|&x| x as usize).collect();
+
+        match write_memory_chain_inner::<T>(handle, base_address as usize, &offsets, value) {
+            Ok(_) => Ok(()),
+            Err(err) => Err(format!("Failed to write memory chain: {:?}", err)),
+        }
+    });
+
+    handle_result(task).await
 }
 
 #[napi]
@@ -346,6 +410,27 @@ impl OpenedProcess {
     }
 
     #[napi]
+    pub async fn read_memory_usize(&self, address: BigInt) -> Result<BigInt> {
+        let address = bigint_to_u64(address);
+        let result = read_memory::<usize>(self.handle, address).await?;
+        Ok(BigInt {
+            sign_bit: false,
+            words: vec![result as u64],
+        })
+    }
+
+    #[napi]
+    pub async fn read_memory_chain_usize(&self, base_address: BigInt, offsets: Vec<BigInt>) -> Result<BigInt> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let result = read_memory_chain::<usize>(self.handle, base_address, offsets).await?;
+        Ok(BigInt {
+            sign_bit: false,
+            words: vec![result as u64],
+        })
+    }
+
+    #[napi]
     pub async fn read_memory_float32(&self, address: BigInt) -> Result<f32> {
         let address = bigint_to_u64(address);
         read_memory::<f32>(self.handle, address).await
@@ -369,6 +454,180 @@ impl OpenedProcess {
         let base_address = self.base_address as u64 + bigint_to_u64(base_address);
         let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
         read_memory_chain::<f64>(self.handle, base_address, offsets).await
+    }
+
+    #[napi]
+    pub async fn write_memory_bool(&self, address: BigInt, value: bool) -> Result<()> {
+        let address = bigint_to_u64(address);
+        write_memory::<bool>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_bool(&self, base_address: BigInt, offsets: Vec<BigInt>, value: bool) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        write_memory_chain::<bool>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_uint8(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_u8(value);
+        write_memory::<u8>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_uint8(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_u8(value);
+        write_memory_chain::<u8>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_int8(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_i8(value);
+        write_memory::<i8>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_int8(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_i8(value);
+        write_memory_chain::<i8>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_uint16(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_u16(value);
+        write_memory::<u16>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_uint16(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_u16(value);
+        write_memory_chain::<u16>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_int16(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_i16(value);
+        write_memory::<i16>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_int16(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_i16(value);
+        write_memory_chain::<i16>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_uint32(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_u32(value);
+        write_memory::<u32>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_uint32(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_u32(value);
+        write_memory_chain::<u32>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_int32(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_i32(value);
+        write_memory::<i32>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_int32(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_i32(value);
+        write_memory_chain::<i32>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_uint64(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_u64(value);
+        write_memory::<u64>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_uint64(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_u64(value);
+        write_memory_chain::<u64>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_int64(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_i64(value);
+        write_memory::<i64>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_int64(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_i64(value);
+        write_memory_chain::<i64>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_usize(&self, address: BigInt, value: BigInt) -> Result<()> {
+        let address = bigint_to_u64(address);
+        let value = bigint_to_usize(value);
+        write_memory::<usize>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_usize(&self, base_address: BigInt, offsets: Vec<BigInt>, value: BigInt) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        let value = bigint_to_usize(value);
+        write_memory_chain::<usize>(self.handle, base_address, offsets, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_float32(&self, address: BigInt, value: f64) -> Result<()> {
+        let address = bigint_to_u64(address);
+        write_memory::<f32>(self.handle, address, value as f32).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_float32(&self, base_address: BigInt, offsets: Vec<BigInt>, value: f64) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        write_memory_chain::<f32>(self.handle, base_address, offsets, value as f32).await
+    }
+
+    #[napi]
+    pub async fn write_memory_float64(&self, address: BigInt, value: f64) -> Result<()> {
+        let address = bigint_to_u64(address);
+        write_memory::<f64>(self.handle, address, value).await
+    }
+
+    #[napi]
+    pub async fn write_memory_chain_float64(&self, base_address: BigInt, offsets: Vec<BigInt>, value: f64) -> Result<()> {
+        let base_address = self.base_address as u64 + bigint_to_u64(base_address);
+        let offsets: Vec<u64> = offsets.into_iter().map(|x| bigint_to_u64(x)).collect();
+        write_memory_chain::<f64>(self.handle, base_address, offsets, value).await
     }
 }
 

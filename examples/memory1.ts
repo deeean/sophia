@@ -1,4 +1,4 @@
-import {getProcesses, openProcess, ProcessAccess} from '../index';
+import { getProcesses, openProcess, ProcessAccess } from '../index';
 
 const BASE_ADDRESS = BigInt(0x003264D0);
 const OFFSETS = [
@@ -14,16 +14,17 @@ const OFFSETS = [
 async function main() {
   const processes = await getProcesses();
   const tutorial = processes.find(p => p.name === 'Tutorial-x86_64.exe');
-
   if (!tutorial) {
     console.log('Tutorial-x86_64.exe not found');
     return;
   }
 
   const openedProcess = await openProcess(ProcessAccess.AllAccess, tutorial.pid);
-  const health = await openedProcess.readMemoryChainUint32(BASE_ADDRESS, OFFSETS);
 
-  console.log('health:', health);
+  const health = await openedProcess.readMemoryChainUint32(BASE_ADDRESS, OFFSETS);
+  if (health < 1000n) {
+    await openedProcess.writeMemoryChainUint32(BASE_ADDRESS, OFFSETS, 1000n);
+  }
 }
 
 main();

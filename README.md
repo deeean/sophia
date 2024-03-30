@@ -71,7 +71,34 @@ main();
 
 <br />
 
-Reading values from a specific process's memory
+Finding the location of one image within the screenshot
+```typescript
+import * as sophia from '@deeean/sophia';
+
+async function main() {
+  const [
+    baboon,
+  ] = await Promise.all([
+    sophia.readImageData('./examples/images/baboon.png'),
+  ]);
+
+  const screenSize = await sophia.getScreenSize();
+  const screenshot = await sophia.takeScreenshot(0, 0, screenSize.x, screenSize.y);
+
+  const position = await sophia.imageSearch(screenshot, baboon);
+  if (position) {
+    console.log('Found at', position);
+  } else {
+    console.log('Not found');
+  }
+}
+
+main();
+```
+
+<br />
+
+Getting the list of processes and reading/writing memory
 ```typescript
 import { getProcesses, openProcess, ProcessAccess } from '@deeean/sophia';
 
@@ -89,16 +116,17 @@ const OFFSETS = [
 async function main() {
   const processes = await getProcesses();
   const tutorial = processes.find(p => p.name === 'Tutorial-x86_64.exe');
-
   if (!tutorial) {
     console.log('Tutorial-x86_64.exe not found');
     return;
   }
 
   const openedProcess = await openProcess(ProcessAccess.AllAccess, tutorial.pid);
-  const health = await openedProcess.readMemoryChainUint32(BASE_ADDRESS, OFFSETS);
 
-  console.log('health:', health);
+  const health = await openedProcess.readMemoryChainUint32(BASE_ADDRESS, OFFSETS);
+  if (health < 1000n) {
+    await openedProcess.writeMemoryChainUint32(BASE_ADDRESS, OFFSETS, 1000n);
+  }
 }
 
 main();
