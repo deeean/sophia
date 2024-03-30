@@ -4,7 +4,7 @@
     <strong>🤖 A Node.js library for automating Windows applications.</strong>
   </p>
   
-  ![NPM Version](https://img.shields.io/npm/v/@deeean/sophia)
+  [![NPM Version](https://img.shields.io/npm/v/@deeean/sophia)](https://www.npmjs.com/package/@deeean/sophia)
   ![NPM License](https://img.shields.io/npm/l/@deeean/sophia)
 </div>
 
