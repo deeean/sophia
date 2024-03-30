@@ -4,6 +4,7 @@ use windows::Win32::Graphics::Gdi::{BitBlt, CreateCompatibleBitmap, CreateCompat
 use windows::Win32::UI::WindowsAndMessaging::{GetDesktopWindow, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 use crate::screen::{ImageData};
 use crate::geometry::Point;
+use crate::utils::handle_result;
 
 fn create_bitmap_info(width: i32, height: i32) -> BITMAPINFO {
     unsafe {
@@ -31,24 +32,20 @@ fn create_bitmap_info(width: i32, height: i32) -> BITMAPINFO {
 
 #[napi]
 pub async fn get_screen_size() -> Result<Point> {
-    match tokio::spawn(async move {
+    let task = tokio::spawn(async move {
         unsafe {
             let width = GetSystemMetrics(SM_CXSCREEN);
             let height = GetSystemMetrics(SM_CYSCREEN);
-            Point::new(width, height)
+            Ok(Point::new(width, height))
         }
-    }).await {
-        Ok(size) => Ok(size),
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
+    });
+
+    handle_result(task).await
 }
 
 #[napi]
 pub async fn take_screenshot(x: i32, y: i32, width: i32, height: i32) -> Result<ImageData> {
-    match tokio::spawn(async move {
+    let task = tokio::spawn(async move {
         unsafe {
             let hwnd = GetDesktopWindow();
             let h_window_dc = GetDC(hwnd);
@@ -98,19 +95,7 @@ pub async fn take_screenshot(x: i32, y: i32, width: i32, height: i32) -> Result<
                 pixel_width: 4,
             })
         }
-    }).await {
-        Ok(res) => {
-            match res {
-                Ok(data) => Ok(data),
-                Err(e) => Err(Error::new(
-                    Status::GenericFailure,
-                    format!("Error: {:?}", e),
-                )),
-            }
-        },
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
+    });
+
+    handle_result(task).await
 }

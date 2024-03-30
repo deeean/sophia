@@ -1,8 +1,9 @@
-use napi::{Error, Status};
+use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use windows::Win32::UI::Input::KeyboardAndMouse::{MOUSE_EVENT_FLAGS, MOUSEEVENTF_ABSOLUTE, MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP, MOUSEEVENTF_MIDDLEDOWN, MOUSEEVENTF_MIDDLEUP, MOUSEEVENTF_MOVE, MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP};
 use windows::Win32::UI::WindowsAndMessaging::{GetCursorPos, GetSystemMetrics, SM_CXSCREEN, SM_CYSCREEN};
 use crate::geometry::Point;
+use crate::utils::handle_result;
 
 #[napi]
 pub enum MouseButton {
@@ -19,21 +20,19 @@ pub struct Mouse {
 #[napi]
 impl Mouse {
     #[napi(js_name = "move")]
-    pub async fn mouse_move(x: i32, y: i32) -> napi::Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn mouse_move(x: i32, y: i32) -> Result<()> {
+        let task = tokio::spawn(async move {
             mouse_move_inner(x, y);
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
-    pub async fn press(button: MouseButton) -> napi::Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn press(button: MouseButton) -> Result<()> {
+        let task = tokio::spawn(async move {
             let down = match button {
                 MouseButton::Left => MOUSEEVENTF_LEFTDOWN,
                 MouseButton::Right => MOUSEEVENTF_RIGHTDOWN,
@@ -41,18 +40,16 @@ impl Mouse {
             };
 
             mouse_event(down, 0, 0, 0, 0);
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
-    pub async fn release(button: MouseButton) -> napi::Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn release(button: MouseButton) -> Result<()> {
+        let task = tokio::spawn(async move {
             let up = match button {
                 MouseButton::Left => MOUSEEVENTF_LEFTUP,
                 MouseButton::Right => MOUSEEVENTF_RIGHTUP,
@@ -60,18 +57,16 @@ impl Mouse {
             };
 
             mouse_event(up, 0, 0, 0, 0);
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
-    pub async fn click(button: MouseButton, x: i32, y: i32) -> napi::Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn click(button: MouseButton, x: i32, y: i32) -> Result<()> {
+        let task = tokio::spawn(async move {
             let (down, up) = match button {
                 MouseButton::Left => (MOUSEEVENTF_LEFTDOWN, MOUSEEVENTF_LEFTUP),
                 MouseButton::Right => (MOUSEEVENTF_RIGHTDOWN, MOUSEEVENTF_RIGHTUP),
@@ -81,26 +76,20 @@ impl Mouse {
             mouse_move_inner(x, y);
             mouse_event(down, x, y, 0, 0);
             mouse_event(up, x, y, 0, 0);
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
-    pub async fn get_position() -> napi::Result<Point> {
-        match tokio::spawn(async move {
-            get_mouse_position_inner()
-        }).await {
-            Ok(pos) => Ok(pos),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+    pub async fn get_position() -> Result<Point> {
+        let task = tokio::spawn(async move {
+            Ok(get_mouse_position_inner())
+        });
+
+        handle_result(task).await
     }
 }
 

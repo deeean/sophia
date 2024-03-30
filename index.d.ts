@@ -20,7 +20,7 @@ export interface Color {
 }
 export const MAGENTA: Color
 export function readImageData(path: string): Promise<ImageData>
-export function writeImageData(path: string, imageData: ImageData): Promise<void>
+export function saveImageData(path: string, imageData: ImageData): Promise<void>
 export function imageSearch(source: ImageData, target: ImageData, variant?: number | undefined | null, transColor?: Color | undefined | null): Promise<Point | null>
 export function multipleImageSearch(source: ImageData, target: ImageData, variant?: number | undefined | null, transColor?: Color | undefined | null): Promise<Array<Point>>
 export const enum Modifiers {
@@ -163,6 +163,28 @@ export interface Process {
   pid: number
   name: string
 }
+export const enum ProcessAccess {
+  AllAccess = 0,
+  CreateProcess = 1,
+  CreateThread = 2,
+  Delete = 3,
+  DupHandle = 4,
+  QueryInformation = 5,
+  QueryLimitedInformation = 6,
+  ReadControl = 7,
+  SetInformation = 8,
+  SetLimitedInformation = 9,
+  SetQuota = 10,
+  SetSessionId = 11,
+  Synchronize = 12,
+  Terminate = 13,
+  VmOperation = 14,
+  VmRead = 15,
+  VmWrite = 16,
+  WriteDac = 17,
+  WriteOwner = 18
+}
+export function openProcess(access: ProcessAccess, pid: number): Promise<OpenedProcess>
 export function getProcesses(): Promise<Array<Process>>
 export class ImageData {
   data: Array<number>
@@ -171,18 +193,18 @@ export class ImageData {
   pixelWidth: number
 }
 export class Keyboard {
-  static press(key: Key): Promise<boolean>
-  static release(key: Key): Promise<boolean>
-  static click(key: Key): Promise<boolean>
+  static press(key: Key): Promise<void>
+  static release(key: Key): Promise<void>
+  static click(key: Key): Promise<void>
   static typing(text: string): Promise<void>
   static registerHotkey(mods: Array<Modifiers>, key: Key, callback: (...args: any[]) => any): number
   static unregisterHotkey(id: number): void
 }
 export class Mouse {
-  static move(x: number, y: number): Promise<boolean>
-  static press(button: MouseButton): Promise<boolean>
-  static release(button: MouseButton): Promise<boolean>
-  static click(button: MouseButton, x: number, y: number): Promise<boolean>
+  static move(x: number, y: number): Promise<void>
+  static press(button: MouseButton): Promise<void>
+  static release(button: MouseButton): Promise<void>
+  static click(button: MouseButton, x: number, y: number): Promise<void>
   static getPosition(): Promise<Point>
 }
 export class Window {
@@ -196,4 +218,28 @@ export class Window {
   static getForegroundWindow(): Promise<Window | null>
   static findWindowByTitle(title: string): Promise<Window | null>
   static findWindowByClassName(classname: string): Promise<Window | null>
+}
+export class OpenedProcess {
+  readMemoryBool(address: bigint): Promise<boolean>
+  readMemoryChainBool(baseAddress: bigint, offsets: Array<bigint>): Promise<boolean>
+  readMemoryUint8(address: bigint): Promise<bigint>
+  readMemoryChainUint8(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryInt8(address: bigint): Promise<bigint>
+  readMemoryChainInt8(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryUint16(address: bigint): Promise<bigint>
+  readMemoryChainUint16(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryInt16(address: bigint): Promise<bigint>
+  readMemoryChainInt16(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryUint32(address: bigint): Promise<bigint>
+  readMemoryChainUint32(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryInt32(address: bigint): Promise<bigint>
+  readMemoryChainInt32(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryUint64(address: bigint): Promise<bigint>
+  readMemoryChainUint64(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryInt64(address: bigint): Promise<bigint>
+  readMemoryChainInt64(baseAddress: bigint, offsets: Array<bigint>): Promise<bigint>
+  readMemoryFloat32(address: bigint): Promise<number>
+  readMemoryChainFloat32(baseAddress: bigint, offsets: Array<bigint>): Promise<number>
+  readMemoryFloat64(address: bigint): Promise<number>
+  readMemoryChainFloat64(baseAddress: bigint, offsets: Array<bigint>): Promise<number>
 }

@@ -1,6 +1,7 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use crate::geometry::Point;
+use crate::utils::handle_result;
 
 #[napi]
 #[derive(Debug, Clone)]
@@ -28,10 +29,10 @@ pub const MAGENTA: Color = Color {
 
 #[napi]
 pub async fn read_image_data(path: String) -> Result<ImageData> {
-    match tokio::spawn(async move {
+    let task = tokio::spawn(async move {
         let img = match image::open(path) {
             Ok(img) => img,
-            Err(e) => return Err(e),
+            Err(e) => return Err(format!("Error: {:?}", e)),
         };
 
         let width = img.width();
@@ -45,55 +46,30 @@ pub async fn read_image_data(path: String) -> Result<ImageData> {
             height,
             pixel_width,
         })
-    }).await {
-        Ok(data) => {
-            match data {
-                Ok(data) => Ok(data),
-                Err(e) => Err(Error::new(
-                    Status::GenericFailure,
-                    format!("Error: {:?}", e),
-                )),
-            }
-        },
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
+    });
+
+    handle_result(task).await
 }
 
 #[napi]
-pub async fn write_image_data(path: String, image_data: &ImageData) -> Result<()> {
+pub async fn save_image_data(path: String, image_data: &ImageData) -> Result<()> {
     let path = path.clone();
     let image_data = image_data.clone();
 
-    match tokio::spawn(async move {
+    let task = tokio::spawn(async move {
         let image_buffer =
             match image::RgbaImage::from_raw(image_data.width, image_data.height, image_data.data) {
                 Some(buffer) => buffer,
-                None => return Err(Error::new(
-                    Status::GenericFailure,
-                    "Failed to create image buffer",
-                )),
+                None => return Err("Failed to create image buffer".to_string()),
             };
 
         match image::DynamicImage::ImageRgba8(image_buffer).save(path) {
             Ok(_) => Ok(()),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
+            Err(e) => Err(format!("Failed to save image: {:?}", e)),
         }
-    }).await {
-        Ok(res) => match res {
-            Ok(_) => Ok(()),
-            Err(e) => Err(e),
-        }
-        Err(e) => Err(Error::new(
-            Status::GenericFailure,
-            format!("Error: {:?}", e),
-        )),
-    }
+    });
+
+    handle_result(task).await
 }
 
 #[napi]
@@ -107,21 +83,15 @@ pub async fn image_search(
     let source = source.clone();
     let target = target.clone();
 
-    match tokio::spawn(async move {
-        if let Some(trans_color) = trans_color {
+    let task = tokio::spawn(async move {
+        Ok(if let Some(trans_color) = trans_color {
             image_search_trans_inner(&source, &target, variant, trans_color)
         } else {
             image_search_inner(&source, &target, variant)
-        }
-    }).await {
-        Ok(res) => Ok(res),
-        Err(e) => {
-            Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            ))
-        },
-    }
+        })
+    });
+
+    handle_result(task).await
 }
 
 #[napi]
@@ -135,21 +105,15 @@ pub async fn multiple_image_search(
     let source = source.clone();
     let target = target.clone();
 
-    match tokio::spawn(async move {
-        if let Some(trans_color) = trans_color {
+    let task = tokio::spawn(async move {
+        Ok(if let Some(trans_color) = trans_color {
             multiple_image_search_trans_inner(&source, &target, variant, trans_color)
         } else {
             multiple_image_search_inner(&source, &target, variant)
-        }
-    }).await {
-        Ok(res) => Ok(res),
-        Err(e) => {
-            Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            ))
-        },
-    }
+        })
+    });
+
+    handle_result(task).await
 }
 
 fn multiple_image_search_inner(

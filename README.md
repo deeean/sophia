@@ -13,27 +13,107 @@
 - Mouse
 - Screen
 - Window
-- Memory [WIP]
+- Memory
 
 ## Installation
 ```bash
 npm install @deeean/sophia
 ```
 
+## Example
+Typing a string
+```typescript
+import { Keyboard } from '@deeean/sophia';
+
+async function main() {
+  await Keyboard.typing('Hello, World!');
+}
+
+main();
+```
+
+<br />
+
+Registering a hotkey for specific key combinations and handling events.
+```typescript
+import { Keyboard, Modifiers, Key } from '@deeean/sophia';
+
+Keyboard.registerHotkey([Modifiers.Control], Key.A, () => {
+    console.log('Ctrl + A is pressed');
+});
+```
+
+<br />
+
+Finding the location of one image within another
+```typescript
+import { readImageData, imageSearch } from '@deeean/sophia';
+
+async function main() {
+  const [
+    baboon,
+    partsOfBaboon,
+  ] = await Promise.all([
+    readImageData('./examples/images/baboon.png'),
+    readImageData('./examples/images/parts_of_baboon.png'),
+  ]);
+
+  const position = await imageSearch(baboon, partsOfBaboon);
+  if (position) {
+    console.log('Found at', position);
+  } else {
+    console.log('Not found');
+  }
+}
+
+main();
+```
+
+<br />
+
+Reading values from a specific process's memory
+```typescript
+import { getProcesses, openProcess, ProcessAccess } from '@deeean/sophia';
+
+const BASE_ADDRESS = BigInt(0x003264D0);
+const OFFSETS = [
+  BigInt(0x48),
+  BigInt(0x0),
+  BigInt(0xF8),
+  BigInt(0x18),
+  BigInt(0x408),
+  BigInt(0x50),
+  BigInt(0x7F8),
+];
+
+async function main() {
+  const processes = await getProcesses();
+  const tutorial = processes.find(p => p.name === 'Tutorial-x86_64.exe');
+
+  if (!tutorial) {
+    console.log('Tutorial-x86_64.exe not found');
+    return;
+  }
+
+  const openedProcess = await openProcess(ProcessAccess.AllAccess, tutorial.pid);
+  const health = await openedProcess.readMemoryChainUint32(BASE_ADDRESS, OFFSETS);
+
+  console.log('health:', health);
+}
+
+main();
+```
+
 ## Supported Platforms
 Only support Windows x64 for now.
 
-## Demo
-### [Aim Test](https://www.arealme.com/aim-test/en/)
-<img src="https://media.deeean.com/sophia_aimtest.gif" />
+## Inspiration
+I'm a big fan of [AutoHotkey](https://www.autohotkey.com/), but I want to use it in Node.js. So I decided to create a library that can automate Windows applications.
 
 ## Related projects
 - [AutoHotkey](https://github.com/AutoHotkey/AutoHotkey)
 - [PyAutoGUI](https://github.com/asweigart/pyautogui)
 - [RobotJS](https://github.com/octalmage/robotjs)
-
-## Inspiration
-I'm a big fan of [AutoHotkey](https://www.autohotkey.com/), but I want to use it in Node.js. So I decided to create a library that can automate Windows applications.
 
 ## License
 Sophia is licensed under the MIT License. Feel free to use it in your projects, adhering to the license terms.

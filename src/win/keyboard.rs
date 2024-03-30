@@ -5,14 +5,14 @@ use std::sync::Mutex;
 use crossbeam_channel::{Receiver, Sender, unbounded};
 use lazy_static::lazy_static;
 use napi::bindgen_prelude::*;
-use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use napi_derive::napi;
+use napi::threadsafe_function::{ThreadsafeFunction, ThreadsafeFunctionCallMode};
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::{HINSTANCE, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::UI::Input::KeyboardAndMouse::{KEYBD_EVENT_FLAGS, KEYEVENTF_UNICODE, SendInput, INPUT, INPUT_KEYBOARD, KEYEVENTF_KEYUP, VIRTUAL_KEY, RegisterHotKey, MOD_NOREPEAT, MOD_SHIFT, MOD_ALT, MOD_CONTROL, UnregisterHotKey};
 use windows::Win32::UI::WindowsAndMessaging::{CreateWindowExW, CW_USEDEFAULT, DefWindowProcW, DispatchMessageW, HMENU, PeekMessageW, PM_REMOVE, RegisterClassW, TranslateMessage, WM_HOTKEY, WM_QUIT, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TRANSPARENT, WS_OVERLAPPED,};
-use crate::utils::encode_wide;
+use crate::utils::{encode_wide, handle_result};
 
 #[napi]
 #[derive(Debug, PartialEq)]
@@ -422,8 +422,8 @@ pub struct Keyboard {
 #[napi]
 impl Keyboard {
     #[napi]
-    pub async fn press(key: Key) -> Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn press(key: Key) -> Result<()> {
+        let task = tokio::spawn(async move {
             unsafe {
                 let mut input = INPUT::default();
                 input.r#type = INPUT_KEYBOARD;
@@ -432,18 +432,16 @@ impl Keyboard {
                 input.Anonymous.ki.time = 0;
                 SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
             }
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
-    pub async fn release(key: Key) -> Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn release(key: Key) -> Result<()> {
+        let task = tokio::spawn(async move {
             unsafe {
                 let mut input = INPUT::default();
                 input.r#type = INPUT_KEYBOARD;
@@ -452,18 +450,16 @@ impl Keyboard {
                 input.Anonymous.ki.time = 0;
                 SendInput(&[input], std::mem::size_of::<INPUT>() as i32);
             }
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
-    pub async fn click(key: Key) -> Result<bool> {
-        match tokio::spawn(async move {
+    pub async fn click(key: Key) -> Result<()> {
+        let task = tokio::spawn(async move {
             unsafe {
                 let mut inputs = Vec::new();
 
@@ -479,18 +475,16 @@ impl Keyboard {
 
                 SendInput(inputs.as_slice(), std::mem::size_of::<INPUT>() as i32);
             }
-        }).await {
-            Ok(_) => Ok(true),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
     pub async fn typing(text: String) -> Result<()> {
-        match tokio::spawn(async move {
+        let task = tokio::spawn(async move {
             unsafe {
                 let text = text
                     .encode_utf16()
@@ -512,13 +506,11 @@ impl Keyboard {
 
                 SendInput(inputs.as_slice(), std::mem::size_of::<INPUT>() as i32);
             }
-        }).await {
-            Ok(_) => Ok(()),
-            Err(e) => Err(Error::new(
-                Status::GenericFailure,
-                format!("Error: {:?}", e),
-            )),
-        }
+
+            Ok(())
+        });
+
+        handle_result(task).await
     }
 
     #[napi]
@@ -547,7 +539,6 @@ impl Keyboard {
     pub fn unregister_hotkey(id: u32) {
         let mut callbacks = GLOBAL_HOTKEY_CALLBACKS.lock().unwrap();
         callbacks.remove(&id);
-
         GLOBAL_HOTKEY_CHANNEL.0.send(GlobalHotkeyMessage::Unregister(id)).unwrap();
     }
 }
