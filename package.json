@@ -70,6 +70,6 @@
     "arrowParens": "always"
   },
   "optionalDependencies": {
-    "@deeean/sophia-win32-x64-msvc": "0.2.0"
+    "@deeean/sophia-win32-x64-msvc": "0.2.1"
   }
 }
